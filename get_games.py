@@ -58,6 +58,7 @@ for i in range(1,10000):
 
 for name in dfs:
     path = 'data/'+str(name)+'.csv'
+    print(path)
     # if os.path.isfile(path):
     #     print(exist)
     dfs[name].to_csv(path, index=False)
