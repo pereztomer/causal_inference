@@ -1,6 +1,6 @@
 from nba_api.stats.static import teams
 import pandas as pd
-from nba_api.stats.endpoints import leaguegamefinder
+from nba_api.stats.endpoints import leaguegamefinder, boxscoreadvancedv2
 import datetime
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
@@ -44,7 +44,7 @@ def team_3_point_win_graph():
     compact = compact.loc[compact['YEAR'] > 2018]
     compact['numeric_wl'] = compact['WL'].apply(lambda x: 1 if x == 'W' else 0)
     compact = compact.drop('WL', axis=1)
-    agg_df = compact.groupby('TEAM_NAME').agg({'numeric_wl': 'sum',
+    agg_df = compact.groupby('TEAM_NAME').agg({'numeric_wl': 'mean',
                                                'FG3A': 'mean'})
 
     team_colors = dict(zip(agg_df.index, mcolors.CSS4_COLORS.values()))
@@ -53,11 +53,11 @@ def team_3_point_win_graph():
     plt.scatter(agg_df['numeric_wl'], agg_df['FG3A'], c=[team_colors[x] for x in agg_df.index])
 
     # add labels
-    plt.xlabel('numeric_wl')
-    plt.ylabel('FG3A')
+    plt.xlabel('Wins percentage')
+    plt.ylabel('3-pointers attempted')
 
     # add title
-    plt.title('numeric_wl vs FG3A by team')
+    plt.title('Wins Percentage vs 3-pointers Attempted by Team')
 
     coefs = np.polyfit(agg_df['numeric_wl'], agg_df['FG3A'], 1)
 
@@ -68,4 +68,5 @@ def team_3_point_win_graph():
 
 
 if __name__ == '__main__':
-    team_3_point_win_graph()
+    # team_3_point_win_graph()
+    # .get_data_frames()[0]['PACE']
