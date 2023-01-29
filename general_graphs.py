@@ -1,6 +1,6 @@
 from nba_api.stats.static import teams
 import pandas as pd
-from nba_api.stats.endpoints import leaguegamefinder, boxscoreadvancedv2
+from nba_api.stats.endpoints import leaguegamefinder
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 import numpy as np
