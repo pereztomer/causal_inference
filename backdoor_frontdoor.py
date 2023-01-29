@@ -16,6 +16,7 @@ def generate_graph():
 
     # draw return a graphviz `dot` object, which jupyter can render
     print(sprinkler.is_valid_backdoor_adjustment_set("T", "y", {"x_0"}))
+    print(sprinkler.is_valid_frontdoor_adjustment_set("T", "y", {"x_0"}))
 
 
     # nx.draw(sprinkler.dag)
