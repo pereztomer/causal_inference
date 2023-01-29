@@ -1,7 +1,7 @@
-#
-# from nba_api.stats.static import teams
-# import pandas as pd
-#
+from nba_api.stats.static import teams
+import pandas as pd
+
+
 def combine_team_games(df, keep_method='home'):
     '''Combine a TEAM_ID-GAME_ID unique table into rows by game. Slow.
 
@@ -42,44 +42,44 @@ def combine_team_games(df, keep_method='home'):
     else:
         raise ValueError(f'Invalid keep_method: {keep_method}')
     return result
-#
+
+
 nba_teams = teams.get_teams()
-# # Select the dictionary for the Celtics, which contains their team ID
-# celtics = [team for team in nba_teams if team['abbreviation'] == 'BOS'][0]
-# celtics_id = celtics['id']
+# Select the dictionary for the Celtics, which contains their team ID
+celtics = [team for team in nba_teams if team['abbreviation'] == 'BOS'][0]
+celtics_id = celtics['id']
+
+minisota = [team for team in nba_teams if team['abbreviation'] == 'MIN'][0]
+minisota_id = minisota['id']
+
+from nba_api.stats.endpoints import leaguegamefinder
+
+# Query for games where the Celtics were playing
+bos_gamefinder = leaguegamefinder.LeagueGameFinder(team_id_nullable=celtics_id)
+minesota_gamefinder = leaguegamefinder.LeagueGameFinder(team_id_nullable=minisota_id)
+# The first DataFrame of those returned is what we want.
+bos_games = bos_gamefinder.get_data_frames()[0]
+minesota_games = minesota_gamefinder.get_data_frames()[0]
+games = pd.concat([bos_games, minesota_games])
+print(games)
+
+game_df = combine_team_games(games)
+print(game_df)
+
+# from nba_api.stats.endpoints import teamgamelog
+# import pandas as pd
 #
-# minisota = [team for team in nba_teams if team['abbreviation'] == 'MIN'][0]
-# minisota_id = minisota['id']
+# # Set the season year
+# season = '2021'
 #
-# from nba_api.stats.endpoints import leaguegamefinder
+# # Get the team game logs for the specified season
+# team_gamelogs = teamgamelog.TeamGameLog(team_id=1610612738)
 #
-# # Query for games where the Celtics were playing
-# bos_gamefinder = leaguegamefinder.LeagueGameFinder(team_id_nullable=celtics_id)
-# minesota_gamefinder = leaguegamefinder.LeagueGameFinder(team_id_nullable=minisota_id)
-# # The first DataFrame of those returned is what we want.
-# bos_games = bos_gamefinder.get_data_frames()[0]
-# minesota_games = minesota_gamefinder.get_data_frames()[0]
-# games = pd.concat([bos_games, minesota_games])
-# print(games)
+# # Convert the results to a DataFrame
+# team_gamelogs_df = pd.DataFrame(team_gamelogs.get_dict()['TeamGameLog'])
 #
-# game_df = combine_team_games(games)
-# print(game_df)
-
-from nba_api.stats.endpoints import teamgamelog
-import pandas as pd
-
-# Set the season year
-season = '2021'
-
-# Get the team game logs for the specified season
-team_gamelogs = teamgamelog.TeamGameLog(team_id=1610612738)
-
-# Convert the results to a DataFrame
-team_gamelogs_df = pd.DataFrame(team_gamelogs.get_dict()['TeamGameLog'])
-
-# Filter the DataFrame to include only the columns you need
-team_gamelogs_df = team_gamelogs_df[['TEAM_NAME', 'TEAM_ID','RATING']]
-
-# Display the DataFrame
-print(team_gamelogs_df)
-
+# # Filter the DataFrame to include only the columns you need
+# team_gamelogs_df = team_gamelogs_df[['TEAM_NAME', 'TEAM_ID', 'RATING']]
+#
+# # Display the DataFrame
+# print(team_gamelogs_df)
