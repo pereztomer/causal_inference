@@ -3,7 +3,6 @@ from nba_api.stats.endpoints import leaguegamefinder
 from nba_api.stats.static import teams
 import pandas as pd
 import matplotlib.pyplot as plt
-import seaborn as sns
 from nba_api.stats.static import teams
 
 nba_teams = teams.get_teams()
@@ -15,7 +14,9 @@ nba_teams = teams.get_teams()
 
 
 for team_id in [team['id'] for team in nba_teams]:
-    gamefinder = leaguegamefinder.LeagueGameFinder(team_id_nullable=team_id, date_from_nullable='1/1/1989', date_to_nullable='1/7/2000')
+    gamefinder = leaguegamefinder.LeagueGameFinder(team_id_nullable=team_id,
+                                                   date_from_nullable='1/1/1989',
+                                                   date_to_nullable='1/7/2000')
     games = gamefinder.get_data_frames()[0]
     print('team: ', [team for team in nba_teams if team['id'] == team_id][0],
           'mean: ', np.mean(games['FG3A']), 'median: ', np.median(games['FG3A']))
