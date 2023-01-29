@@ -1,10 +1,10 @@
 from nba_api.stats.static import teams
 import pandas as pd
 from nba_api.stats.endpoints import leaguegamefinder, boxscoreadvancedv2
-import datetime
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 import numpy as np
+
 
 def three_point_over_the_years_graph():
     nba_teams = teams.get_teams()
@@ -18,7 +18,6 @@ def three_point_over_the_years_graph():
     date_3pt['YEAR'] = date_3pt['GAME_DATE'].apply(lambda x: int(x[:4]))
     date_3pt = date_3pt.drop('GAME_DATE', axis=1)
     three_p_avg_by_year = date_3pt.groupby('YEAR').mean()
-    print(three_p_avg_by_year)
 
     # Assuming 'date_3pt' is your DataFrame
     mean_by_year = date_3pt.groupby('YEAR').mean()
@@ -68,5 +67,5 @@ def team_3_point_win_graph():
 
 
 if __name__ == '__main__':
-    # team_3_point_win_graph()
-    # .get_data_frames()[0]['PACE']
+    team_3_point_win_graph()
+    three_point_over_the_years_graph()
