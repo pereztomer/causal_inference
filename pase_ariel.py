@@ -41,17 +41,16 @@ def main():
 
 
 if __name__ == '__main__':
-    pd.read_excel('pace__2022_23.xlsx')
-    # from statsmodels.tsa.stattools import grangercausalitytests
-    #
-    # # Generate sample data
-    # data = {'T': [1, 2, 3, 4, 5, 6], 'Y': [2, 3, 4, 5, 6, 7]}
-    # df = pd.DataFrame(data)
-    #
-    # # Perform Granger causality test
-    # granger_test = grangercausalitytests(df[['Y', 'T']], maxlag=2)
-    #
-    # # Print results
-    # for i, test_results in enumerate(granger_test.items()):
-    #     print("\nGranger causality test for lag={}".format(i + 1))
-    #     print("\n".join("{}: {}".format(k, v) for k, v in test_results[1].items()))
+    from statsmodels.tsa.stattools import grangercausalitytests
+
+    # Generate sample data
+    data = {'T': [1, 2, 3, 4, 5, 6], 'Y': [2, 3, 4, 5, 6, 7]}
+    df = pd.DataFrame(data)
+
+    # Perform Granger causality test
+    granger_test = grangercausalitytests(df[['Y', 'T']], maxlag=2)
+
+    # Print results
+    for i, test_results in enumerate(granger_test.items()):
+        print("\nGranger causality test for lag={}".format(i + 1))
+        print("\n".join("{}: {}".format(k, v) for k, v in test_results[1].items()))
