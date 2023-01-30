@@ -6,6 +6,7 @@ import matplotlib.colors as mcolors
 import numpy as np
 from datetime import datetime
 from glob import glob
+from sklearn.metrics import accuracy_score
 
 
 def combine_team_games(df, keep_method='home'):
@@ -84,21 +85,16 @@ def collect_pace():
 
 
 def moving_avg(df, team_id, date, feature, n=10):
-    curr_df = df[['TEAM_ID_A', 'GAME_DATE', 'SEASON', 'Playyoff Game'] + [feature]].copy()
+    curr_df = df[['TEAM_ID_A', 'GAME_DATE', 'SEASON', 'TEAM_ID_B', 'Playyoff Game'] + [feature]].copy()
     curr_val = curr_df[(curr_df['GAME_DATE'] == date) & (curr_df['TEAM_ID_A'] == team_id)]
 
     curr_season = int(curr_val['SEASON'])
-
     curr_playoff = int(curr_val['Playyoff Game'])
+
     dates_df = curr_df[(curr_df['GAME_DATE'] < date) & (curr_df['TEAM_ID_A'] == team_id) &
                        (curr_df['SEASON'] == curr_season) & (curr_df['Playyoff Game'] == curr_playoff)]
-    dates_df = dates_df.sort_values("GAME_DATE", ascending=False).reset_index()
 
-    if len(dates_df) == 0:
-        return None
-    elif len(dates_df) < n:
-        return dates_df[feature].mean()
-    return dates_df.iloc[range(n)][feature].mean()
+    return dates_df[feature].mean()
 
 
 def combine_ds():
@@ -136,15 +132,16 @@ def combine_ds():
     result = result[(result['Preseason Game'] != 1) & (result['All-star Game'] != 1)]
     result = result.rename(columns={'YEAR_A': 'SEASON', 'FG3A_A': 'FG3A_FOR_GAME', 'WL_A': 'WL'})
     result.loc[:, 'WP_A'] = result.apply(lambda row: row['W_A'] / row['GP_A'], axis=1)
-    result.drop(columns=['W_A', 'GP_A'])
+    result = result.drop(columns=['W_A', 'GP_A'])
     result.loc[:, 'WP_B'] = result.apply(lambda row: row['W_B'] / row['GP_B'], axis=1)
-    result.drop(columns=['W_B', 'GP_B'])
+    result = result.drop(columns=['W_B', 'GP_B'])
 
     mirror_df = result.copy()
     a_cols = [col for col in mirror_df.columns if '_A' in col]
     b_cols = [col for col in mirror_df.columns if '_B' in col]
 
     mirror_df[a_cols + b_cols] = mirror_df[b_cols + a_cols]
+    mirror_df.loc[:, 'WL'] = mirror_df['WL'].apply(lambda x: 'W' if x == 'L' else 'L')
 
     result.loc[:, 'home_game'] = 1
     mirror_df.loc[:, 'home_game'] = 0
@@ -154,7 +151,7 @@ def combine_ds():
     result.loc[:, 'T'] = result.apply(lambda x: moving_avg(result, x['TEAM_ID_A'],
                                                            x['GAME_DATE'], 'FG3A_FOR_GAME'), axis=1)
 
-    result.to_csv('data\\final_ds.csv')
+    result.to_csv('data\\final_ds_correct.csv')
 
 
 def add_binary_treatment(df):
@@ -164,6 +161,8 @@ def add_binary_treatment(df):
     seasons = df['SEASON'].unique()
     playoff_values = [0, 1]
 
+    norm_terms = {}
+
     for team_id in teams_id:
         for season in seasons:
             for playoff in playoff_values:
@@ -171,10 +170,25 @@ def add_binary_treatment(df):
                 norm_term = df[mask]['T'].mean()
                 df.loc[mask, 'T'] = df[mask]['T'].apply(lambda x: x/norm_term)
                 df.loc[mask, 'T'] = df[mask]['T'].apply(lambda x: 0 if x < 1 else 1)
+                norm_terms[(team_id, season, playoff)] = norm_term
 
-    df.to_csv('final_ds_with_normalized_t.csv')
+    # df.to_csv('final_ds_with_normalized_t.csv')
+
+    return norm_terms
+
 
 if __name__ == '__main__':
-    # combine_ds()
-    final_df = pd.read_csv('data\\final_ds.csv')
-    add_binary_treatment(final_df)
+    combine_ds()
+    # final_df = pd.read_csv('data\\final_ds.csv')
+    # norm_terms = add_binary_treatment(final_df)
+    #
+    # df = pd.read_csv('data\\final_ds_with_normalized_t.csv')
+    # prediction = df['T'].to_numpy()
+    #
+    # true = df.apply(lambda x: x['FG3A_FOR_GAME']/norm_terms[(x['TEAM_ID_A'], x['SEASON'],
+    #                                                   x['Playyoff Game'])], axis=1)
+    #
+    # true = true.apply(lambda x: 0 if x < 1 else 1).to_numpy()
+    #
+    #
+    # print(accuracy_score(prediction, true))
