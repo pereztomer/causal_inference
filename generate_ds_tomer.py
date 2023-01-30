@@ -84,7 +84,6 @@ def collect_pace():
 
 
 def moving_avg(df, team_id, date, feature, n=10):
-
     curr_df = df[['TEAM_ID_A', 'GAME_DATE', 'SEASON', 'Playyoff Game'] + [feature]].copy()
     curr_val = curr_df[(curr_df['GAME_DATE'] == date) & (curr_df['TEAM_ID_A'] == team_id)]
 
@@ -92,7 +91,7 @@ def moving_avg(df, team_id, date, feature, n=10):
 
     curr_playoff = int(curr_val['Playyoff Game'])
     dates_df = curr_df[(curr_df['GAME_DATE'] < date) & (curr_df['TEAM_ID_A'] == team_id) &
-                    (curr_df['SEASON'] == curr_season) & (curr_df['Playyoff Game'] == curr_playoff)]
+                       (curr_df['SEASON'] == curr_season) & (curr_df['Playyoff Game'] == curr_playoff)]
     dates_df = dates_df.sort_values("GAME_DATE", ascending=False).reset_index()
 
     if len(dates_df) == 0:
@@ -136,7 +135,7 @@ def combine_ds():
     result.loc[:, 'GAME_DATE'] = pd.to_datetime(result['GAME_DATE'])
     result = result[(result['Preseason Game'] != 1) & (result['All-star Game'] != 1)]
     result = result.rename(columns={'YEAR_A': 'SEASON', 'FG3A_A': 'FG3A_FOR_GAME', 'WL_A': 'WL'})
-    result.loc[:, 'WP_A'] = result.apply(lambda row: row['W_A']/row['GP_A'], axis=1)
+    result.loc[:, 'WP_A'] = result.apply(lambda row: row['W_A'] / row['GP_A'], axis=1)
     result.drop(columns=['W_A', 'GP_A'])
     result.loc[:, 'WP_B'] = result.apply(lambda row: row['W_B'] / row['GP_B'], axis=1)
     result.drop(columns=['W_B', 'GP_B'])
@@ -159,10 +158,22 @@ def combine_ds():
 
 
 def add_binary_treatment(df):
-    df
+    nba_teams = teams.get_teams()
+    teams_id = [val['id'] for val in nba_teams]
 
+    seasons = df['SEASON'].unique()
+    playoff_values = [0, 1]
 
+    for team_id in teams_id:
+        for season in seasons:
+            for playoff in playoff_values:
+                mask = (df['TEAM_ID_A'] == team_id) & (df['SEASON'] == season) & (df['Playyoff Game'] == playoff)
+                norm_term = df[mask]['T'].mean()
+                df.loc[mask, 'T'] = df[mask]['T'].apply(lambda x: x/norm_term)
+
+    df.to_csv('final_ds_with_normalized_t.csv')
 
 if __name__ == '__main__':
     # combine_ds()
-    df = pd.read_csv('data\\final_ds.csv')
+    final_df = pd.read_csv('data\\final_ds.csv')
+    add_binary_treatment(final_df)
