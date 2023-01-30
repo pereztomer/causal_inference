@@ -170,6 +170,7 @@ def add_binary_treatment(df):
                 mask = (df['TEAM_ID_A'] == team_id) & (df['SEASON'] == season) & (df['Playyoff Game'] == playoff)
                 norm_term = df[mask]['T'].mean()
                 df.loc[mask, 'T'] = df[mask]['T'].apply(lambda x: x/norm_term)
+                df.loc[mask, 'T'] = df[mask]['T'].apply(lambda x: 0 if x < 1 else 1)
 
     df.to_csv('final_ds_with_normalized_t.csv')
 
