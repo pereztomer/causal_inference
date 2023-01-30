@@ -159,7 +159,7 @@ def combine_ds():
 
 
 def add_binary_treatment(df):
-
+    df
 
 
 
