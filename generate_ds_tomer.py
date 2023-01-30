@@ -4,6 +4,7 @@ from nba_api.stats.endpoints import leaguegamefinder
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 import numpy as np
+from glob import glob
 
 
 def combine_team_games(df, keep_method='home'):
@@ -70,10 +71,39 @@ def main():
     #         season_id_date_mapping_dict[row['SEASON_ID']] = [row['GAME_DATE']]
 
 
+def collect_pace():
+    files = glob('data/pace_csv/*.csv', recursive=True)
+    total_pace_df = pd.DataFrame()
+    for file in files:
+        df = pd.read_csv(file)
+        df['YEAR'] = int(file.split('/')[-1].split('_')[1])
+        total_pace_df = pd.concat([total_pace_df, df])
+
+    return total_pace_df
+
 
 def combine_ds():
     total_games = pd.read_csv('./data/games.csv')
+    total_games = total_games.drop(columns=['index'], axis=1)
+    total_games = total_games.rename(columns={'TEAM_NAME_A': 'TEAM_A', 'TEAM_NAME_B': 'TEAM_B'})
+    total_games['YEAR_A'] = total_games['SEASON_ID'].apply(lambda x: int(str(x)[1:]))
+    total_games['YEAR_B'] = total_games['SEASON_ID'].apply(lambda x: int(str(x)[1:]))
+    total_games['Playyoff Game'] = total_games['SEASON_ID'].apply(
+        lambda x: 1 if (int(str(x)[0]) == 4 or int(str(x)[0]) == 5) else 0)
+    total_games['Regular Season Game'] = total_games['SEASON_ID'].apply(
+        lambda x: 1 if int(str(x)[0]) == 2 else 0)
+    total_games['Preseason Game'] = total_games['SEASON_ID'].apply(
+        lambda x: 1 if int(str(x)[0]) == 1 else 0)
+    total_games['All-star Game'] = total_games['SEASON_ID'].apply(
+        lambda x: 1 if int(str(x)[0]) == 3 else 0)
+    total_pace_df = collect_pace()
+    total_pace_df_A = total_pace_df.add_suffix('_A')
+    total_pace_df_B = total_pace_df.add_suffix('_B')
+    result = pd.merge(total_games, total_pace_df_A, how='left', on=['TEAM_A', 'YEAR_A'])
+    result = pd.merge(result, total_pace_df_B, how='left', on=['TEAM_B', 'YEAR_B'])
     print('hi')
+    result.groupby('TEAM_ID_A')
+
 
 if __name__ == '__main__':
     combine_ds()
