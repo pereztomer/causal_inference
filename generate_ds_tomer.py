@@ -72,14 +72,18 @@ def main():
 
 
 def collect_pace():
-    files = glob('data/pace_csv/*.csv', recursive=True)
+    files = glob('data\\pace_csv\\*.csv', recursive=True)
     total_pace_df = pd.DataFrame()
     for file in files:
         df = pd.read_csv(file)
-        df['YEAR'] = int(file.split('/')[-1].split('_')[1])
+        df.loc[:, 'YEAR'] = int(file.split('\\')[-1].split('_')[1])
         total_pace_df = pd.concat([total_pace_df, df])
 
     return total_pace_df
+
+
+def get_treatment(team_id, date):
+    pass
 
 
 def combine_ds():
@@ -101,8 +105,14 @@ def combine_ds():
     total_pace_df_B = total_pace_df.add_suffix('_B')
     result = pd.merge(total_games, total_pace_df_A, how='left', on=['TEAM_A', 'YEAR_A'])
     result = pd.merge(result, total_pace_df_B, how='left', on=['TEAM_B', 'YEAR_B'])
-    print('hi')
-    result.groupby('TEAM_ID_A')
+
+    result = result[['TEAM_A_ID', 'TEAM_A', 'GAME_ID', 'GAME_DATE', 'WL_A', 'FG3A_A',
+                     'TEAM_ID_B', 'TEAM_B', 'YEAR_A', 'PlayyoffGame', 'Regular Season Game'
+                     'Pre Season Game', 'All-star Game', 'GP_A', 'W_A', 'OFFRTG_A', 'DEFRTG_A',
+                     'NETRTG_A', 'AST%_A', 'AST/TO_A', 'AST RATIO_A', 'OREB%_A', 'DREB%_A', 'REB%_A',
+                     'TOV%_A', 'EFG%_A', 'TS%_A', 'PACE_A', 'GP_B', 'W_B', 'OFFRTG_B', 'DEFRTG_B',
+                     'NETRTG_B', 'AST%_B', 'AST/TO_B', 'AST RATIO_B', 'OREB%_B', 'DREB%_B', 'REB%_B',
+                     'TOV%_B', 'EFG%_B', 'TS%_B', 'PACE_B',]]
 
 
 if __name__ == '__main__':
