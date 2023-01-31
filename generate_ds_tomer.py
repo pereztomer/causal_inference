@@ -120,7 +120,7 @@ def combine_ds():
     result = result[result['YEAR_A'] >= 1996]
 
     result = result[['TEAM_ID_A', 'TEAM_A', 'GAME_ID', 'GAME_DATE', 'WL_A', 'FG3A_A',
-                     'TEAM_ID_B', 'TEAM_B', 'YEAR_A', 'Playyoff Game', 'Regular Season Game',
+                     'TEAM_ID_B', 'TEAM_B', 'FG3A_B', 'YEAR_A', 'Playyoff Game', 'Regular Season Game',
                      'Preseason Game', 'All-star Game', 'GP_A', 'W_A', 'OFFRTG_A', 'DEFRTG_A',
                      'NETRTG_A', 'AST%_A', 'AST/TO_A', 'AST RATIO_A', 'OREB%_A', 'DREB%_A', 'REB%_A',
                      'TOV%_A', 'EFG%_A', 'TS%_A', 'PACE_A', 'GP_B', 'W_B', 'OFFRTG_B', 'DEFRTG_B',
@@ -130,7 +130,7 @@ def combine_ds():
 
     result.loc[:, 'GAME_DATE'] = pd.to_datetime(result['GAME_DATE'])
     result = result[(result['Preseason Game'] != 1) & (result['All-star Game'] != 1)]
-    result = result.rename(columns={'YEAR_A': 'SEASON', 'FG3A_A': 'FG3A_FOR_GAME', 'WL_A': 'WL'})
+    result = result.rename(columns={'YEAR_A': 'SEASON', 'WL_A': 'WL'})
     result.loc[:, 'WP_A'] = result.apply(lambda row: row['W_A'] / row['GP_A'], axis=1)
     result = result.drop(columns=['W_A', 'GP_A'])
     result.loc[:, 'WP_B'] = result.apply(lambda row: row['W_B'] / row['GP_B'], axis=1)
@@ -148,10 +148,10 @@ def combine_ds():
 
     result = pd.concat([result, mirror_df])
 
-    result.loc[:, 'T'] = result.apply(lambda x: moving_avg(result, x['TEAM_ID_A'],
-                                                           x['GAME_DATE'], 'FG3A_FOR_GAME'), axis=1)
+    # result.loc[:, 'T'] = result.apply(lambda x: moving_avg(result, x['TEAM_ID_A'],
+    #                                                        x['GAME_DATE'], 'FG3A_A'), axis=1)
 
-    result.to_csv('data\\final_ds_correct.csv')
+    result.to_csv('data\\final_ds_no_moving_avg.csv')
 
 
 def add_binary_treatment(df):
