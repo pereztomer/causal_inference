@@ -46,11 +46,6 @@ def moving_avg(df, x):
     return x
 
 
-def multiply(row):
-    row['A1'] = row[0] * 2
-    row['B1'] = row[1] * 3
-    row['C1'] = row[2] * 4
-    return row
 
 
 def create_ds_till_game():
@@ -71,7 +66,7 @@ def create_ds_till_game():
     games_df = games_df[games_df['TEAM_ID'] != -1]
 
     games_df = games_df.apply(lambda x: moving_avg(games_df, x), axis=1)
-
+    games_df.to_csv()
 
 if __name__ == '__main__':
     create_ds_till_game()
