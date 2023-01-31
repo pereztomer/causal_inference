@@ -54,7 +54,7 @@ def get_unordered_pairs(lst):
 
 
 def main():
-    games = pd.read_csv('games.csv')
+    games = pd.read_csv('data/games.csv')
 
     game_df = combine_team_games(games)
     leaguegamefinder.get_season_id()
