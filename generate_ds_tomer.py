@@ -119,8 +119,8 @@ def combine_ds():
 
     result = result[result['YEAR_A'] >= 1996]
 
-    result = result[['TEAM_ID_A', 'TEAM_A', 'GAME_ID', 'GAME_DATE', 'WL_A', 'FG3A_A',
-                     'TEAM_ID_B', 'TEAM_B', 'FG3A_B', 'YEAR_A', 'Playyoff Game', 'Regular Season Game',
+    result = result[['TEAM_ID_A', 'TEAM_A', 'GAME_ID', 'GAME_DATE', 'WL_A', 'FG3A_A', 'FGA_A',
+                     'TEAM_ID_B', 'TEAM_B', 'FG3A_B', 'FGA_B', 'YEAR_A', 'Playyoff Game', 'Regular Season Game',
                      'Preseason Game', 'All-star Game', 'GP_A', 'W_A', 'OFFRTG_A', 'DEFRTG_A',
                      'NETRTG_A', 'AST%_A', 'AST/TO_A', 'AST RATIO_A', 'OREB%_A', 'DREB%_A', 'REB%_A',
                      'TOV%_A', 'EFG%_A', 'TS%_A', 'PACE_A', 'GP_B', 'W_B', 'OFFRTG_B', 'DEFRTG_B',
@@ -151,7 +151,7 @@ def combine_ds():
     # result.loc[:, 'T'] = result.apply(lambda x: moving_avg(result, x['TEAM_ID_A'],
     #                                                        x['GAME_DATE'], 'FG3A_A'), axis=1)
 
-    result.to_csv('data\\final_ds_no_moving_avg.csv')
+    result.to_csv('data\\final_ds_no_moving_avg_pc.csv')
 
 
 def add_binary_treatment(df):
