@@ -6,7 +6,6 @@ import matplotlib.colors as mcolors
 import numpy as np
 from datetime import datetime
 from glob import glob
-from sklearn.metrics import accuracy_score
 
 
 def combine_team_games(df, keep_method='home'):
@@ -94,7 +93,7 @@ def moving_avg(df, team_id, date, feature, n=10):
     dates_df = curr_df[(curr_df['GAME_DATE'] < date) & (curr_df['TEAM_ID_A'] == team_id) &
                        (curr_df['SEASON'] == curr_season) & (curr_df['Playyoff Game'] == curr_playoff)]
 
-    return dates_df[feature].mean()
+    return 7,8,9
 
 
 def combine_ds():
@@ -148,8 +147,8 @@ def combine_ds():
 
     result = pd.concat([result, mirror_df])
 
-    # result.loc[:, 'T'] = result.apply(lambda x: moving_avg(result, x['TEAM_ID_A'],
-    #                                                        x['GAME_DATE'], 'FG3A_A'), axis=1)
+    result.loc[:, ['A','B','C']] = result.apply(lambda x: moving_avg(result, x['TEAM_ID_A'],
+                                                           x['GAME_DATE'], 'FG3A_A'), axis=1)
 
     result.to_csv('data\\final_ds_no_moving_avg_pc.csv')
 

@@ -1,120 +1,77 @@
-import datetime
-
-# class EventMsgType(Enum):
-#     FIELD_GOAL_MADE = 1
-#     FIELD_GOAL_MISSED = 2
-#     FREE_THROWfree_throw_attempt = 3
-#     REBOUND = 4
-#     TURNOVER = 5
-#     FOUL = 6
-#     VIOLATION = 7
-#     SUBSTITUTION = 8
-#     TIMEOUT = 9
-#     JUMP_BALL = 10
-#     EJECTION = 11
-#     PERIOD_BEGIN = 12
-#     PERIOD_END = 13
-
-# print(f'Searching through {len(games)} game(s) for the game_id of {game_id} where {game_matchup}')
-#
-#         # Query for the play by play of that most recent regular season game
-#         df = playbyplay.PlayByPlay(game_id).get_data_frames()[0]
-#         print(df.head())  # just looking at the head of the data
-#         df.to_csv(f'data/play_by_play/{game_id}.csv')
-import numpy as np
-from nba_api.stats.endpoints import playbyplay
-from nba_api.stats.static import teams
 from nba_api.stats.endpoints import leaguegamefinder
-from nba_api.stats.library.parameters import Season
-import pandas as pd
-from nba_api.stats.library.parameters import SeasonType
+from nba_api.stats.static import teams
 
 
-def find_strikes(df, team, opp):
-    row_index = 0
-    curr_team_score = 0
-    curr_opp_score = 0
-    strikes = []
-    curr_strike = []
-    for index, row in df.iterrows():
-        if row[team] == -1 or row[team] == 0:
-            continue
+def moving_avg(df, x):
+    relevant_features = ['TEAM_NAME', 'TEAM_ID', 'GAME_ID', 'GAME_DATE', 'MATCHUP',
+                         'WL', 'MIN',
+                         'PTS', 'FGM', 'FGA', 'FG_PCT',
+                         'FG3M', 'FG3A', 'FG3_PCT', 'FTM',
+                         'FTA', 'FT_PCT', 'OREB', 'DREB',
+                         'REB', 'AST', 'STL', 'BLK', 'TOV',
+                         'PF', 'PLUS_MINUS', 'Playyoff Game',
+                         'Regular Season Game']
+    curr_df = df[relevant_features].copy()
 
-        if row[team] > curr_team_score:
-            curr_strike.append(row['EVENTNUM'])
-            curr_team_score = row[team]
-        else:
-            if len(curr_strike) >= 8:
-                strikes.append(curr_strike)
-            curr_strike = []
-            curr_team_score = 0
-    return strikes
-    #     if row[team] > 0:
-    #         row_index = index
-    #         curr_team_score = row[team]
-    #         curr_opp_score = row[opp]
-    #         break
-    #
-    # df[df[team] > curr_team_score]
+    dates_df = curr_df[(curr_df['GAME_DATE'] < x['GAME_DATE']) &
+                       (curr_df['TEAM_ID'] == x['TEAM_ID']) &
+                       (curr_df['Playyoff Game'] == x['Playyoff Game'])]
+
+    avg_df = dates_df[['PTS', 'FGM', 'FGA', 'FG_PCT',
+                       'FG3M', 'FG3A', 'FG3_PCT', 'FTM',
+                       'FTA', 'FT_PCT', 'OREB', 'DREB',
+                       'REB', 'AST', 'STL', 'BLK', 'TOV',
+                       'PF', 'PLUS_MINUS']]
+    avg_df = avg_df.mean()
+    x['avg_PTS'] = avg_df['PTS']
+    x['avg_FGM'] = avg_df['FGM']
+    x['avg_FGA'] = avg_df['FGA']
+    x['avg_FG_PCT'] = avg_df['FG_PCT']
+    x['avg_FG3M'] = avg_df['FG3M']
+    x['avg_FG3A'] = avg_df['FG3A']
+    x['avg_FG3_PCT'] = avg_df['FG3_PCT']
+    x['avg_FTM'] = avg_df['FTM']
+    x['avg_FTA'] = avg_df['FTA']
+    x['avg_FT_PCT'] = avg_df['FT_PCT']
+    x['avg_OREB'] = avg_df['OREB']
+    x['avg_DREB'] = avg_df['DREB']
+    x['avg_REB'] = avg_df['REB']
+    x['avg_AST'] = avg_df['AST']
+    x['avg_STL'] = avg_df['STL']
+    x['avg_BLK'] = avg_df['BLK']
+    x['avg_TOV'] = avg_df['TOV']
+    x['avg_PF'] = avg_df['PF']
+    x['avg_PLUS_MINUS'] = avg_df['PLUS_MINUS']
+
+    return x
 
 
-def normalize_time(x):
-    out = x['PCTIMESTRING'] + datetime.timedelta(minutes=12) * (x['PERIOD']-1)
-    return out
+def multiply(row):
+    row['A1'] = row[0] * 2
+    row['B1'] = row[1] * 3
+    row['C1'] = row[2] * 4
+    return row
 
 
-def main():
+def create_ds_till_game():
     game_finder = leaguegamefinder.LeagueGameFinder(season_nullable='2018-19')
 
-    games_dict = game_finder.get_normalized_dict()
-    games = games_dict['LeagueGameFinderResults']
-    for game in games:
-        game_id = game['GAME_ID']
-        game_match_up = game['MATCHUP']
-        # print('Game ID :', game_id)
+    games_df = game_finder.get_data_frames()[0]
 
-        # Query for the play by play of that most recent regular season game
-        df = playbyplay.PlayByPlay(game_id).get_data_frames()[0]
-        df = df[['EVENTNUM', 'PCTIMESTRING', 'PERIOD', 'EVENTMSGTYPE', 'SCORE']]
+    games_df['Playyoff Game'] = games_df['SEASON_ID'].apply(
+        lambda x: 1 if (int(str(x)[0]) == 4 or int(str(x)[0]) == 5) else 0)
+    games_df['Regular Season Game'] = games_df['SEASON_ID'].apply(
+        lambda x: 1 if int(str(x)[0]) == 2 else 0)
 
-        df = df[(df['EVENTMSGTYPE'] == 3) | (df['EVENTMSGTYPE'] == 1) | (df['EVENTMSGTYPE'] == 9)]
+    games_df = games_df[(games_df['Playyoff Game'] == 1) | (games_df['Regular Season Game'] == 1)]
 
-        df.loc[:, 'diff'] = df['SCORE'].apply(lambda x: int(x.split('-')[0]) -
-                                                        int(x.split('-')[1]) if x is not None else -1)
+    nba_teams = teams.get_teams()
+    teams_id = [val['id'] for val in nba_teams]
+    games_df.loc[:, 'TEAM_ID'] = games_df['TEAM_ID'].apply(lambda x: x if x in teams_id else -1)
+    games_df = games_df[games_df['TEAM_ID'] != -1]
 
-        df.loc[:, 'PCTIMESTRING'] = pd.to_datetime(df['PCTIMESTRING'], format='%M:%S')
-        df['game_time'] = df.apply(lambda x: normalize_time(x), axis=1)
-        df = df.drop(['PCTIMESTRING'], axis=1).sort_values(['game_time'])
-        time_stamps = df[df['EVENTMSGTYPE'] == 9].copy()
-
-        prev = 0
-        # for index, row in df.iterrows():
-        #     if row['EVENTMSGTYPE'] == 9:
-        #         while df.iloc[prev]['PCTIMESTRING'] > 2:
-        #             prev += 1
-        #
-        #         for i in range(prev, index):
-        #             if df.iloc[i]['diff'] > 8:
-        #                 curr_index = index
-        #                 while df.iloc[curr_index]['PCTIMESTRING'] - row['EVENTMSGTYPE']['PCTIMESTRING'] > 2:
-        #
-        #
-        #                 final_ds.append((row['EVENTNUM'], 1, ))
-        #
-        #
-        #
-        #
-        # timeout_df = df[df['EVENTMSGTYPE'] == 9]['EVENTNUM', 'PCTIMESTRING', 'diff']
-        #
-        #
-        #
-        #
-        # df.loc[df['EVENTMSGTYPE'] == 9, '2MS'] = df[df['EVENTMSGTYPE'] == 9].apply(lambda row: row[])
-        # # df.loc[:, 'HOME_SCORE'] = df['SCORE'].apply(lambda x: int(x.split('-')[0]) if x is not None else -1)
-        # # df.loc[:, 'GUST_SCORE'] = df['SCORE'].apply(lambda x: int(x.split('-')[1]) if x is not None else -1)
-        # #
-        # # strikes = find_strikes(df, 'HOME_SCORE', '')
+    games_df = games_df.apply(lambda x: moving_avg(games_df, x), axis=1)
 
 
 if __name__ == '__main__':
-    main()
+    create_ds_till_game()
