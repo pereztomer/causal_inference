@@ -84,6 +84,7 @@ def main():
 
         df.loc[:, 'PCTIMESTRING'] = pd.to_datetime(df['PCTIMESTRING'], format='%M:%S')
         df['game_time'] = df.apply(lambda x: normalize_time(x), axis=1)
+        df = df.drop('PCTIMESTRING')
         time_stamps = df[df['EVENTMSGTYPE'] == 9].copy()
 
         prev = 0
