@@ -28,34 +28,6 @@ import pandas as pd
 from nba_api.stats.library.parameters import SeasonType
 
 
-def find_strikes(df, team, opp):
-    row_index = 0
-    curr_team_score = 0
-    curr_opp_score = 0
-    strikes = []
-    curr_strike = []
-    for index, row in df.iterrows():
-        if row[team] == -1 or row[team] == 0:
-            continue
-
-        if row[team] > curr_team_score:
-            curr_strike.append(row['EVENTNUM'])
-            curr_team_score = row[team]
-        else:
-            if len(curr_strike) >= 8:
-                strikes.append(curr_strike)
-            curr_strike = []
-            curr_team_score = 0
-    return strikes
-    #     if row[team] > 0:
-    #         row_index = index
-    #         curr_team_score = row[team]
-    #         curr_opp_score = row[opp]
-    #         break
-    #
-    # df[df[team] > curr_team_score]
-
-
 def check_if_diff_inc(df, ts, init_diff, period, pdt=2):
     max_diff = df[(df['PERIOD'] == period) & (df['PCTIMESTRING'] < ts) &
                   (df['PCTIMESTRING'] > ts - pd.Timedelta(minutes=2))]['diff'].max()
@@ -86,7 +58,7 @@ def check_if_strike(df, ts, period, indicators, pdt=2):
 
 
 def main():
-    game_finder = leaguegamefinder.LeagueGameFinder(season_nullable='2018-19')
+    game_finder = leaguegamefinder.LeagueGameFinder(season_nullable='2017-18')
 
     games_df = game_finder.get_data_frames()[0]
 
@@ -262,7 +234,7 @@ def main():
             print(f"Done with game {game_count} out of {len(games_df['GAME_ID'])}")
 
     final_ds = pd.DataFrame(final_ds)
-    final_ds.to_csv('data\Timeout.csv')
+    final_ds.to_csv('data\Timeout_17_18.csv')
 
 
 if __name__ == '__main__':

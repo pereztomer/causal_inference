@@ -3,6 +3,10 @@ from nba_api.stats.static import teams
 
 
 def moving_avg(df, x):
+
+    if '-01' in str(x["GAME_DATE"]):
+        print(f'Processing game at {x["GAME_DATE"]}')
+
     relevant_features = ['TEAM_NAME', 'TEAM_ID', 'GAME_ID', 'GAME_DATE', 'MATCHUP',
                          'WL', 'MIN',
                          'PTS', 'FGM', 'FGA', 'FG_PCT',
@@ -66,7 +70,7 @@ def create_ds_till_game():
     games_df = games_df[games_df['TEAM_ID'] != -1]
 
     games_df = games_df.apply(lambda x: moving_avg(games_df, x), axis=1)
-    games_df.to_csv()
+    games_df.to_csv("data\\untill_game_avg_17_18.csv")
 
 if __name__ == '__main__':
     create_ds_till_game()
