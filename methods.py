@@ -60,7 +60,7 @@ def matching(df, covariates):
 
 def main():
 
-    df = pd.read_csv('data\\final_18.csv')
+    df = pd.read_csv('timeout/data/final_18.csv')
 
     df = df.drop(columns=['GAME_ID', 'TS', 'Unnamed: 0'])
     df = pd.get_dummies(df)
