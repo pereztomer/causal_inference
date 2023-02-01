@@ -223,8 +223,9 @@ def get_play_by_play_ds(season, path_to_save):
 
         game_count += 1
 
-        if game_count % 20 == 0:
+        if game_count % 100 == 0:
             print(f"Done with game {game_count} out of {len(games_df['GAME_ID'].unique())}")
+
 
     final_ds = pd.DataFrame(final_ds)
     final_ds.to_csv(path_to_save)

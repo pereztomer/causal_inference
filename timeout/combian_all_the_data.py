@@ -1,5 +1,7 @@
 import pandas as pd
-
+from get_play_by_play_data import get_play_by_play_ds
+from get_statistics_until_game import create_ds_till_game
+import os
 
 def combine_team_games(df, keep_method='home'):
     '''Combine a TEAM_ID-GAME_ID unique table into rows by game. Slow.
@@ -61,7 +63,21 @@ def combine_play_by_play_stats(p_path, stats_path, save_path):
 
 
 def main():
-    combine_play_by_play_stats('data/Timeout_17_18.csv', 'data\\untill_game_avg_17_18.csv', 'data\\final_17.csv')
+
+    seasons_to_get = ['2018-19', '2019-20', '2020-21', '2021-22', '2022-23']
+    path_to_save = 'data'
+
+    for season in seasons_to_get:
+        print(f'Starting with season {season}')
+        os.makedirs(f'{path_to_save}\\{season}', exist_ok=True)
+        play_by_play_path = f'{path_to_save}\\{season}\\{season}_play_by_play.csv'
+        stats_path = f'{path_to_save}\\{season}\\{season}_general_stats_till_game.csv'
+        final_path = f'{path_to_save}\\{season}\\{season}_timeout_final.csv'
+
+        get_play_by_play_ds(season=season, path_to_save=play_by_play_path)
+        create_ds_till_game(season=season, path_to_save=stats_path)
+        combine_play_by_play_stats(p_path=play_by_play_path, stats_path=stats_path,
+                                   save_path=final_path)
 
 
 if __name__ == '__main__':

@@ -13,6 +13,16 @@ def propensity_score_model(df, x, y):
     return model
 
 
+def calculate_ate_ipw(df, propensity_model):
+    df['weights'] = 1 / propensity_model.predict_proba(df[['T', 'Y']])[:, 1]
+    treated_group = df[df['T'] == 1]
+    control_group = df[df['T'] == 0]
+    ate = np.average(treated_group['Y'],
+                     weights=treated_group['weights']) - np.average(control_group['Y'],
+                                                                    weights=control_group['weights'])
+    return ate
+
+
 def ipw(df, propensity_model, covariates):
     ipw_df = df.copy()
     ipw_df['propensity_score'] = propensity_model.predict_proba(ipw_df[covariates]).T[1]
@@ -60,7 +70,7 @@ def matching(df, covariates):
 
 def main():
 
-    df = pd.read_csv('timeout/data/final_18.csv')
+    df = pd.read_csv('timeout/data/old_data/final_18.csv')
 
     df = df.drop(columns=['GAME_ID', 'TS', 'Unnamed: 0'])
     df = pd.get_dummies(df)
@@ -71,12 +81,12 @@ def main():
 
     propensity_model = propensity_score_model(df, covariates, 'T')
 
-    ipw_att = ipw(df, propensity_model, covariates)
+    ipw_ate = calculate_ate_ipw(df, propensity_model, covariates)
     # s_learner_att = s_learner(df, covariates)
     # t_learner_att = t_learner(df, covariates)
     # matching_att = matching(df, covariates)
 
-    print('ATT Using IPW: ', ipw_att)
+    print('ATE Using IPW: ', ipw_ate)
     # print('ATT Using S-Learner: ', s_learner_att)
     # print('ATT Using T-Learner: ', t_learner_att)
     # print('ATT Using Matching: ', matching_att)

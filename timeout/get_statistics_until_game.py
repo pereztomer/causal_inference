@@ -4,9 +4,6 @@ from nba_api.stats.static import teams
 
 def moving_avg(df, x):
 
-    if '-01' in str(x["GAME_DATE"]):
-        print(f'Processing game at {x["GAME_DATE"]}')
-
     relevant_features = ['TEAM_NAME', 'TEAM_ID', 'GAME_ID', 'GAME_DATE', 'MATCHUP',
                          'WL', 'MIN',
                          'PTS', 'FGM', 'FGA', 'FG_PCT',
