@@ -19,13 +19,21 @@ from nba_api.stats.endpoints import leaguegamefinder
 import pandas as pd
 
 
-def check_if_diff_inc(df, ts, init_diff, period):
-    max_diff = df[(df['PERIOD'] == period) & (df['PCTIMESTRING'] < ts) &
-                  (df['PCTIMESTRING'] > ts - pd.Timedelta(minutes=2))]['diff'].max()
+def check_if_diff_inc(df, ts, init_diff, period, home_run):
+    if home_run == 1:  # means that diff should be positive
+        max_diff = df[(df['PERIOD'] == period) & (df['PCTIMESTRING'] < ts) &
+                      (df['PCTIMESTRING'] > ts - pd.Timedelta(minutes=2))]['diff'].max()
 
-    if max_diff - init_diff < 4:
-        return 0
-    return 1
+        if max_diff - init_diff < 4:
+            return 0
+        return 1
+    elif home_run == 0:  # means that diff should be negative
+        min_diff = df[(df['PERIOD'] == period) & (df['PCTIMESTRING'] < ts) &
+                      (df['PCTIMESTRING'] > ts - pd.Timedelta(minutes=2))]['diff'].min()
+
+        if min_diff - init_diff > -4:
+            return 0
+        return 1
 
 
 def check_if_strike(df, ts, period, indicators):
@@ -129,11 +137,10 @@ def get_play_by_play_ds(season, path_to_save):
                 init_diff, sus_index = check_if_strike(df, row['PCTIMESTRING'], row['PERIOD'], [])
 
                 if init_diff >= 8 or init_diff <= -8:
-
                     home_run = 1 if init_diff >= 8 else 0
 
                     index_to_remove += list(sus_index)
-                    y = check_if_diff_inc(df, row['PCTIMESTRING'], init_diff, row['PERIOD'])
+                    y = check_if_diff_inc(df, row['PCTIMESTRING'], init_diff, row['PERIOD'], home_run)
                     final_ds['GAME_ID'].append(row['GAME_ID'])
                     final_ds['T'].append(1)
                     final_ds['Y'].append(y)
@@ -151,7 +158,6 @@ def get_play_by_play_ds(season, path_to_save):
                     final_ds['to_home'].append(stats['to_home'])
                     final_ds['to_road'].append(stats['to_road'])
                     final_ds['home_run'].append(home_run)
-
 
         df = df.drop(index_to_remove)
 
@@ -225,7 +231,6 @@ def get_play_by_play_ds(season, path_to_save):
 
         if game_count % 100 == 0:
             print(f"Done with game {game_count} out of {len(games_df['GAME_ID'].unique())}")
-
 
     final_ds = pd.DataFrame(final_ds)
     final_ds.to_csv(path_to_save)
