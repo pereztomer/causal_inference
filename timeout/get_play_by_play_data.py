@@ -208,7 +208,7 @@ def get_play_by_play_ds(season, path_to_save):
                 home_run = 1 if init_diff >= 0 else 0
 
                 indicators += list(index_indicate)
-                y = check_if_diff_inc(df, row['PCTIMESTRING'], init_diff, row['PERIOD'])
+                y = check_if_diff_inc(df, row['PCTIMESTRING'], init_diff, row['PERIOD'], home_run)
                 final_ds['GAME_ID'].append(row['GAME_ID'])
                 final_ds['T'].append(0)
                 final_ds['Y'].append(y)
