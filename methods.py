@@ -2,9 +2,9 @@ import pandas as pd
 import numpy as np
 from sklearn.linear_model import LogisticRegression
 from sklearn.linear_model import LinearRegression
-from sklearn.neighbors import KNeighborsRegressor
+from sklearn.neighbors import KNeighborsRegressor, NearestNeighbors
 from xgboost import XGBClassifier
-import csv
+import matplotlib.pyplot as plt
 
 
 def propensity_score_model(df, x, y):
@@ -68,28 +68,79 @@ def matching(df, covariates):
     return (matching_df['Y'] - matching_df['Y_n']).mean()
 
 
+def knn_matching_ate_ci(df, t_col, y_col, covariates, k=5, num_bootstrap=100, alpha=0.05):
+    treated = df[df[t_col] == 1]
+    untreated = df[df[t_col] == 0]
+    covariates = covariates
+
+    # Perform KNN matching on the covariates
+    knn = NearestNeighbors(n_neighbors=1)
+    knn.fit(untreated[covariates])
+    dist, matches = knn.kneighbors(treated[covariates])
+    matches = pd.DataFrame({'treatment': treated.index,
+                            'match': untreated.index[matches[:, 0]]})
+
+    # Calculate ATE by comparing treated and matched untreated groups
+    matched = pd.concat([treated, untreated.loc[matches['match']]], axis=0)
+    ate = matched[y_col].mean() - matched.loc[matches['match']][y_col].mean()
+
+    # Bootstrap to estimate confidence interval
+    ates = []
+    for i in range(num_bootstrap):
+        sample = df.sample(frac=1, replace=True)
+        t_sample = sample[sample[t_col] == 1]
+        u_sample = sample[sample[t_col] == 0]
+        knn = NearestNeighbors(n_neighbors=k)
+        knn.fit(u_sample[covariates])
+        dist, matches = knn.kneighbors(t_sample[covariates])
+        matches = pd.DataFrame({'treatment': t_sample.index,
+                                'match': u_sample.index[matches[:, 0]]})
+        matched = pd.concat([t_sample, u_sample.loc[matches['match']]], axis=0)
+        ate_boot = matched[y_col].mean() - matched.loc[matches['match']][y_col].mean()
+        ates.append(ate_boot)
+
+    # Calculate confidence interval
+    ci_lower = np.percentile(ates, alpha / 2 * 100)
+    ci_upper = np.percentile(ates, (1 - alpha / 2) * 100)
+
+    return ate, ci_lower, ci_upper
+
+
 def main():
 
-    df = pd.read_csv('timeout/data/old_data/final_18.csv')
+    df = pd.read_csv('timeout/data/final_timeout_ds.csv.csv')
 
-    df = df.drop(columns=['GAME_ID', 'TS', 'Unnamed: 0'])
-    df = pd.get_dummies(df)
-    covariates = list(df.columns)
+    print(len(df))
+
+    # df = pd.get_dummies(df)
+    covariates = list(df.columns)# [col for col in list(df.columns) if 'avg' not in col]
 
     covariates.remove('Y')
     covariates.remove('T')
+    covariates.remove('TEAM_ABBREVIATION_curr')
+    covariates.remove('TEAM_ABBREVIATION_opponent')
 
-    propensity_model = propensity_score_model(df, covariates, 'T')
+    ci_left = []
+    ci_right = []
+    ci_center = []
 
-    ipw_ate = calculate_ate_ipw(df, propensity_model, covariates)
-    # s_learner_att = s_learner(df, covariates)
-    # t_learner_att = t_learner(df, covariates)
-    # matching_att = matching(df, covariates)
+    i = 0
+    for team in df['TEAM_ABBREVIATION_curr'].unique():
+        print(team + ':', end=' ')
+        center, left, right = knn_matching_ate_ci(df[df['TEAM_ABBREVIATION_curr'] == team].dropna(), 'T', 'Y', covariates)
+        print(f'ATE = {center}, CI = [{left}, {right}]')
+        plt.plot([left, right], [i, i], linewidth=3, color='cyan')
+        plt.scatter([center], [i], color='orange')
 
-    print('ATE Using IPW: ', ipw_ate)
-    # print('ATT Using S-Learner: ', s_learner_att)
-    # print('ATT Using T-Learner: ', t_learner_att)
-    # print('ATT Using Matching: ', matching_att)
+        ci_left.append((i, left))
+        ci_right.append((i, right))
+        ci_center.append((i, center))
+        i += 1
+    plt.plot([0, 0], [0, 30], color='red')
+    plt.xlabel('ATE confidence interval')
+    plt.ylabel('Team')
+    plt.show()
+    # (0.016442042958639658, -0.02024526584271785, 0.041451219237673)
 
 if __name__ == '__main__':
     main()

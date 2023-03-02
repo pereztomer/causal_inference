@@ -50,9 +50,6 @@ def generate_graph():
     # draw return a graphviz `dot` object, which jupyter can render
     print(f'Backdoor criterion:'
           f' {sprinkler.is_valid_backdoor_adjustment_set("T - timeout after a scoring streak", "Y - scoring streak has stopped", set(observed_vars))}')
-    print(f'Frontdoor criterion:'
-          f' {sprinkler.is_valid_frontdoor_adjustment_set("T - timeout after a scoring streak", "Y - scoring streak has stopped", set(observed_vars))}')
-
 
 def main():
     generate_graph()
